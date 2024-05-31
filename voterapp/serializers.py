@@ -34,3 +34,22 @@ class UserSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     user_name = serializers.CharField()
     user_password = serializers.CharField()
+    
+
+# # Town api
+
+from .models import Town
+
+class TownSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Town
+        fields = ['town_id', 'town_name']
+
+
+# # Booth api
+
+from .models import Booth
+class BoothSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booth
+        fields = ['booth_id', 'booth_name']

@@ -159,3 +159,23 @@ def get_voters(request):
         })
     
     return JsonResponse({'voters': voters})
+
+
+# # Town api
+
+from .models import Town
+from .serializers import TownSerializer
+
+class TownList(generics.ListAPIView):
+    queryset = Town.objects.all()
+    serializer_class = TownSerializer
+
+
+# # Booth api
+
+from .models import Booth
+from .serializers import BoothSerializer
+
+class BoothList(generics.ListAPIView):
+    queryset = Booth.objects.all()
+    serializer_class = BoothSerializer
