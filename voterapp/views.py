@@ -179,3 +179,32 @@ from .serializers import BoothSerializer
 class BoothList(generics.ListAPIView):
     queryset = Booth.objects.all()
     serializer_class = BoothSerializer
+
+
+# # Panchayat_samiti api
+
+from .models import PanchayatSamiti
+from .serializers import PanchayatSamitiSerializer
+
+class PanchayatSamitiListCreate(generics.ListCreateAPIView):
+    queryset = PanchayatSamiti.objects.all()
+    serializer_class = PanchayatSamitiSerializer
+
+class PanchayatSamitiRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PanchayatSamiti.objects.all()
+    serializer_class = PanchayatSamitiSerializer
+
+
+# # ZP api
+
+from .models import ZP
+from .serializers import ZPSerializer
+
+class ZPlistCreate(generics.ListCreateAPIView):
+    queryset = ZP.objects.all()
+    serializer_class = ZPSerializer
+
+class ZPRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ZP.objects.all()
+    serializer_class = ZPSerializer
+

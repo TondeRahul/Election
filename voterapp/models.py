@@ -92,3 +92,23 @@ class Voter(models.Model):
 
     class Meta:
         managed = False 
+
+
+# # Panchayat_samiti api
+
+class PanchayatSamiti(models.Model):
+    panchayat_samiti_id = models.IntegerField(primary_key=True, default=0)
+    panchayat_samiti_name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_panchayat_samiti'
+
+
+# # ZP api
+
+class ZP(models.Model):
+    zp_id = models.IntegerField(primary_key=True, default=0)
+    zp_name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_zp'

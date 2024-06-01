@@ -53,3 +53,23 @@ class BoothSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booth
         fields = ['booth_id', 'booth_name']
+
+
+# # Panchayat_samiti api
+
+from .models import PanchayatSamiti
+
+class PanchayatSamitiSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PanchayatSamiti
+        fields = ['panchayat_samiti_id', 'panchayat_samiti_name']
+
+
+# # ZP api
+
+from .models import ZP
+
+class ZPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZP
+        fields = ['zp_id', 'zp_name']
