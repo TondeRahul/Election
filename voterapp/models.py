@@ -29,7 +29,7 @@ from django.contrib.auth.hashers import make_password
 
 
 
-class Voter(models.Model):
+class Voterlist(models.Model):
     voter_id = models.IntegerField(primary_key=True,default=0)
     voter_name = models.CharField(max_length=255)
     voter_parent_name = models.CharField(max_length=255)
@@ -99,6 +99,7 @@ class Voter(models.Model):
 class PanchayatSamiti(models.Model):
     panchayat_samiti_id = models.IntegerField(primary_key=True, default=0)
     panchayat_samiti_name = models.CharField(max_length=255)
+    panchayat_samiti_zp_id = models.IntegerField()
 
     class Meta:
         db_table = 'tbl_panchayat_samiti'
@@ -109,6 +110,28 @@ class PanchayatSamiti(models.Model):
 class ZP(models.Model):
     zp_id = models.IntegerField(primary_key=True, default=0)
     zp_name = models.CharField(max_length=255)
+    zp_state_id = models.IntegerField()
+
 
     class Meta:
         db_table = 'tbl_zp'
+
+
+# # vidhansabha api
+
+class Vidhansabha(models.Model):
+    vidhansabha_id = models.IntegerField(primary_key=True, default = 0)
+    vidhansabha_name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_vidhansabha'
+
+
+# # state api
+
+class State(models.Model):
+    state_id = models.IntegerField(primary_key=True, default=0)
+    state_name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_state'

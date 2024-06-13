@@ -18,6 +18,15 @@
 # ##########################################################
 
 
+from rest_framework import serializers
+from .models import Voterlist
+
+class VoterlistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Voterlist
+        fields = '__all__'
+
+
 # # register api
 
 from rest_framework import serializers
@@ -73,3 +82,23 @@ class ZPSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZP
         fields = ['zp_id', 'zp_name']
+
+
+# # Vidhansabha api 
+
+from .models import Vidhansabha
+
+class VidhansabhaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vidhansabha
+        fields = ['vidhansabha_id', 'vidhansabha_name']
+
+
+# # State api
+
+from .models import State
+
+class StateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = State
+        fields = ['state_id', 'state_name']
