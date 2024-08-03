@@ -149,6 +149,10 @@
 #         db_table = 'tbl_favour'
 
 
+
+
+# working code
+
 from django.db import models
 
 class Voterlist(models.Model):
@@ -160,10 +164,16 @@ class Voterlist(models.Model):
     voter_gender = models.CharField(max_length=255)
     voter_town_id = models.IntegerField()
     voter_booth_id = models.IntegerField()
-    voter_contact_number = models.IntegerField()
+    voter_contact_number = models.BigIntegerField()
     voter_cast = models.CharField(max_length=255)
     voter_favour_id = models.IntegerField()
     voter_constituency_id = models.IntegerField()
+    voter_dob = models.DateField()
+    voter_marital_status_id = models.IntegerField()
+    voter_updated_by = models.IntegerField(null=True, blank=True)  # Store user_id as an integer
+    voter_updated_date = models.DateField(auto_now=True, null=True, blank=True)
+    voter_live_status_id = models.IntegerField(null=True, blank=True)
+    voter_religion_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'tbl_voter'
@@ -182,10 +192,12 @@ class Town(models.Model):
     town_id = models.AutoField(primary_key=True)
     town_name = models.CharField(max_length=255)
     town_panchayat_samiti_id = models.IntegerField()
+    town_panchayat_samiti_circle_id = models.IntegerField()
 
     class Meta:
         db_table = 'tbl_town'
         unique_together = ('town_name', 'town_panchayat_samiti_id')
+
 
 
 
@@ -325,7 +337,7 @@ from django.db import models
 class Town_user(models.Model):
     town_user_id = models.AutoField(primary_key=True)
     town_user_name = models.CharField(max_length=255, unique=True)
-    town_user_contact_number = models.CharField(max_length=15)
+    town_user_contact_number = models.BigIntegerField()
     town_user_password = models.CharField(max_length=255)
     town_user_town_id = models.IntegerField()
     town_user_politician_id = models.IntegerField()
@@ -342,4 +354,68 @@ class Constituency(models.Model):
     class Meta:
         db_table = 'tbl_constituency'
 
+# Marital statues api
 
+class MaritalStatus(models.Model):
+    marital_status_id = models.AutoField(primary_key=True)
+    marital_status_type = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_marital_status'
+
+
+ # api for multiple booth asign to user
+
+class UserBooth(models.Model):
+    user_booth_user_id =  models.IntegerField()
+    user_booth_booth_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_user_booth'  
+
+
+# voter Live status
+
+class LiveStatus(models.Model):
+    live_status_id = models.AutoField(primary_key=True)
+    live_status_type = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_live_status'
+
+
+# religion api
+
+class Religion(models.Model):
+    religion_id = models.AutoField(primary_key=True)
+    religion_name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'tbl_religion'
+
+
+# Panchayat Samiti Circle 
+
+class PanchayatSamitiCircle(models.Model):
+    panchayat_samiti_circle_id = models.AutoField(primary_key=True)
+    panchayat_samiti_circle_name = models.CharField(max_length=255)
+    panchayat_samiti_circle_zp_circle_id = models.IntegerField()
+
+    def __str__(self):
+        return self.panchayat_samiti_circle_name
+    
+    class Meta:
+        db_table = 'tbl_panchayat_samiti_circle' 
+
+# zp_circle
+
+class ZpCircle(models.Model):
+    zp_circle_id = models.AutoField(primary_key=True)
+    zp_circle_name = models.CharField(max_length=255)
+    zp_circle_zp_id = models.IntegerField()
+
+    def __str__(self):
+        return self.zp_circle_name
+    
+    class Meta:
+        db_table = 'tbl_zp_circle' 

@@ -150,54 +150,156 @@
 
 
 
+# # working code 
+
 from rest_framework import serializers
-from .models import Voterlist, Town, Booth
+from .models import Voterlist, Town, Booth, Favour_non_favour
+from django.utils.timezone import localtime
+from datetime import timedelta
+import pytz
+from .models import LiveStatus
+
 
 class VoterlistSerializer(serializers.ModelSerializer):
     town_name = serializers.SerializerMethodField()
     booth_name = serializers.SerializerMethodField()
     booth_id = serializers.SerializerMethodField()
+    voter_updated_by = serializers.ReadOnlyField()
+    user_name = serializers.SerializerMethodField()
+    voter_updated_date = serializers.DateField(format='%Y-%m-%d', required=False, allow_null=True)
+    live_status_type = serializers.SerializerMethodField()
+    religion_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Voterlist
         fields = ['voter_id', 'voter_name', 'voter_parent_name', 'voter_house_number', 'voter_age', 'voter_gender', 'town_name', 
-                  'booth_id','booth_name', 'voter_contact_number', 'voter_cast','voter_favour_id', 'voter_constituency_id']
+                  'booth_id', 'booth_name', 'voter_contact_number', 'voter_cast', 'voter_favour_id', 'voter_constituency_id', 'voter_dob', 
+                  'voter_marital_status_id', 'voter_updated_by', 'user_name', 'voter_updated_date', 'voter_live_status_id', 'live_status_type', 'religion_name']
+        
+        extra_kwargs = {
+            'voter_house_number': {'allow_null': True, 'required': False},
+            'voter_parent_name': {'allow_null': True, 'required': False},
+            'voter_age': {'allow_null': True, 'required': False},
+            'voter_gender': {'allow_null': True, 'required': False},
+            'voter_contact_number': {'allow_null': True, 'required': False},
+            'voter_cast': {'allow_null': True, 'required': False},
+            'voter_favour_id': {'allow_null': True, 'required': False},
+            'voter_constituency_id': {'allow_null': True, 'required': False},
+            'voter_dob': {'allow_null': True, 'required': False},
+            'voter_marital_status_id': {'allow_null': True, 'required': False},
+            'voter_updated_by': {'allow_null': True, 'required': False},
+            'voter_updated_date': {'allow_null': True, 'required': False},
+            'voter_live_status_id': {'allow_null': True, 'required': False},
+        }
+
+
 
     def get_town_name(self, obj):
-        try:
-            town = Town.objects.get(town_id=obj.voter_town_id)
-            return town.town_name
-        except Town.DoesNotExist:
-            return None
+        if obj.voter_town_id:
+            try:
+                town = Town.objects.get(town_id=obj.voter_town_id)
+                return town.town_name
+            except Town.DoesNotExist:
+                return None
+        return None
 
     def get_booth_name(self, obj):
-        try:
-            booth = Booth.objects.get(booth_id=obj.voter_booth_id)
-            return booth.booth_name
-        except Booth.DoesNotExist:
-            return None
-        
-    def get_favour_type(self, validated_data):
-        voter_favour_id = validated_data.get('voter_favour_id')
-        if not Favour_non_favour.objects.filter(favour_id=voter_favour_id).exists():
-            raise serializers.ValidationError('Invalid favour_id')
-        return super().create(validated_data)
-    
+        if obj.voter_booth_id:
+            try:
+                booth = Booth.objects.get(booth_id=obj.voter_booth_id)
+                return booth.booth_name
+            except Booth.DoesNotExist:
+                return None
+        return None
 
     def get_booth_id(self, obj):
         return obj.voter_booth_id
+
+    # def get_voter_updated_date(self, obj):
+    #     if obj.voter_updated_date is None:
+    #         return None
+
+    #     request = self.context.get('request', None)
+
+    #     if request:
+    #         tz = 'Asia/Kolkata'  
+    #         local_tz = pytz.timezone(tz)
+    #         local_time = obj.voter_updated_date.astimezone(local_tz)
+    #         utc_offset = local_time.strftime('%z')
+    #         gmt_offset = f"(GMT{utc_offset[:3]}:{utc_offset[3:]})"
+    #         return local_time.strftime('%Y-%m-%d %H:%M:%S') + gmt_offset
+    #     return obj.voter_updated_date.strftime('%Y-%m-%d %H:%M:%S')
+
+        
+    def get_voter_updated_by(self, obj):
+        if obj.voter_updated_by:
+            return obj.voter_updated_by.username  # Return the username of the editor
+        return None
+    
+    def get_user_name(self, obj):
+        try:
+            user = User.objects.get(user_id=obj.voter_updated_by)
+            return user.user_name
+        except User.DoesNotExist:
+            return None
+    
+    def get_live_status_type(self, obj):
+        if obj.voter_live_status_id:
+            try:
+                live_status = LiveStatus.objects.get(live_status_id=obj.voter_live_status_id)
+                return live_status.live_status_type
+            except LiveStatus.DoesNotExist:
+                return None
+        return None
+    
+    def get_religion_name(self, obj):
+        if obj.voter_religion_id:
+            try:
+                religion = Religion.objects.get(religion_id=obj.voter_religion_id)
+                return religion.religion_name
+            except Religion.DoesNotExist:
+                return None
+        return None
+        
+    
         
 
 
-# # register api
+# # # register api
 
+# from .models import User
+
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         # fields = '__all__'
+#         fields = ['user_name', 'user_phone', 'user_password', 'user_booth_id']
+
+# api for multiple booth asign to user
+
+from rest_framework import serializers
 from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = User
+       fields = ['user_id', 'user_name', 'user_phone', 'user_password']
+
+from .models import UserBooth
+
+class UserBoothSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        # fields = '__all__'
-        fields = ['user_name', 'user_phone', 'user_password']
+        model = UserBooth
+        fields = ['user_booth_user_id', 'user_booth_booth_id']
+
+class UserRegistrationSerializer(serializers.Serializer):
+    user_name = serializers.CharField(max_length=255)
+    user_password = serializers.CharField(max_length=255)
+    user_phone = serializers.CharField(max_length=15)
+    booth_ids = serializers.ListField(
+        child=serializers.IntegerField()
+    )
+
 
 
 
@@ -206,6 +308,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     user_name = serializers.CharField()
+    # user_booth_id = serializers.CharField()
     user_password = serializers.CharField()
 
 
@@ -283,16 +386,6 @@ class VoterlistSerializerWithCast(serializers.ModelSerializer):
         fields = ['voter_name', 'voter_cast']
 
 
-
-# Politician login
-
-from rest_framework import serializers
-
-class PoliticianLoginSerializer(serializers.Serializer):
-    politician_name = serializers.CharField()
-    politician_password = serializers.CharField(write_only=True)
-
-
 # Politician register
 
 from .models import Politician
@@ -302,6 +395,14 @@ class PoliticianSerializer(serializers.ModelSerializer):
         model = Politician
         fields = [ 'politician_name', 'politician_contact_number', 'politician_password']
 
+
+# Politician login
+
+from rest_framework import serializers
+
+class PoliticianLoginSerializer(serializers.Serializer):
+    politician_name = serializers.CharField()
+    politician_password = serializers.CharField(write_only=True)
 
 
 # # Religion api
@@ -360,5 +461,30 @@ class ConstituencySerializer(serializers.ModelSerializer):
         fields = ['constituency_id', 'constituency_name']
 
 
+# Marital status api
+
+from .models import MaritalStatus
+
+class MaritalStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaritalStatus
+        fields = ['marital_status_id', 'marital_status_type']
 
 
+# Panchayat Samiti Circle
+
+from .models import PanchayatSamitiCircle
+
+class PanchayatSamitiCircleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PanchayatSamitiCircle
+        fields = ['panchayat_samiti_circle_id', 'panchayat_samiti_circle_name']
+
+# ZP Circle 
+
+from .models import ZpCircle
+
+class ZpCircleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZpCircle
+        fields = ['zp_circle_id', 'zp_circle_name']
