@@ -174,6 +174,8 @@ class Voterlist(models.Model):
     voter_updated_date = models.DateField(auto_now=True, null=True, blank=True)
     voter_live_status_id = models.IntegerField(null=True, blank=True)
     voter_religion_id = models.IntegerField(null=True, blank=True)
+    voter_dead_year = models.IntegerField(null=True, blank=True)
+    voter_vote_confirmation_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'tbl_voter'
@@ -291,7 +293,6 @@ class State(models.Model):
 
 # politician login and politician register
 
-from django.db import models
 from django.contrib.auth.hashers import make_password
 
 class Politician(models.Model):
@@ -332,8 +333,6 @@ class Favour_non_favour(models.Model):
 
 # user_town login and user_town register
 
-from django.db import models
-
 class Town_user(models.Model):
     town_user_id = models.AutoField(primary_key=True)
     town_user_name = models.CharField(max_length=255, unique=True)
@@ -345,6 +344,15 @@ class Town_user(models.Model):
     class Meta:
         db_table = 'tbl_town_user'
 
+
+class UserTown(models.Model):
+    user_town_town_user_id =  models.IntegerField()
+    user_town_town_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_user_town' 
+
+        
 # constituency wise voter api
 
 class Constituency(models.Model):
@@ -419,3 +427,15 @@ class ZpCircle(models.Model):
     
     class Meta:
         db_table = 'tbl_zp_circle' 
+
+
+# voter vote confirmation
+
+class Vote_confirmation(models.Model):
+    vote_confirmation_id = models.AutoField(primary_key=True)
+    vote_confirmation_type = models.CharField(max_length=255)
+    
+    class Meta:
+        db_table = 'tbl_vote_confirmation' 
+
+        

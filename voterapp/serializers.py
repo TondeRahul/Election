@@ -153,7 +153,7 @@
 # # working code 
 
 from rest_framework import serializers
-from .models import Voterlist, Town, Booth, Favour_non_favour
+from .models import Voterlist, Town, Booth, Favour_non_favour, Vote_confirmation
 from django.utils.timezone import localtime
 from datetime import timedelta
 import pytz
@@ -169,12 +169,14 @@ class VoterlistSerializer(serializers.ModelSerializer):
     voter_updated_date = serializers.DateField(format='%Y-%m-%d', required=False, allow_null=True)
     live_status_type = serializers.SerializerMethodField()
     religion_name = serializers.SerializerMethodField()
+    vote_confirmation_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Voterlist
         fields = ['voter_id', 'voter_name', 'voter_parent_name', 'voter_house_number', 'voter_age', 'voter_gender', 'town_name', 
                   'booth_id', 'booth_name', 'voter_contact_number', 'voter_cast', 'voter_favour_id', 'voter_constituency_id', 'voter_dob', 
-                  'voter_marital_status_id', 'voter_updated_by', 'user_name', 'voter_updated_date', 'voter_live_status_id', 'live_status_type', 'religion_name']
+                  'voter_marital_status_id', 'voter_updated_by', 'user_name', 'voter_updated_date', 'voter_live_status_id',
+                  'live_status_type', 'religion_name', 'voter_dead_year', 'voter_vote_confirmation_id' ,'vote_confirmation_type']
         
         extra_kwargs = {
             'voter_house_number': {'allow_null': True, 'required': False},
@@ -190,6 +192,8 @@ class VoterlistSerializer(serializers.ModelSerializer):
             'voter_updated_by': {'allow_null': True, 'required': False},
             'voter_updated_date': {'allow_null': True, 'required': False},
             'voter_live_status_id': {'allow_null': True, 'required': False},
+            'voter_dead_year' : {'allow_null': True, 'required': False},
+            'vote_confirmation_type' : {'allow_null': True, 'required': False},
         }
 
 
@@ -215,22 +219,7 @@ class VoterlistSerializer(serializers.ModelSerializer):
     def get_booth_id(self, obj):
         return obj.voter_booth_id
 
-    # def get_voter_updated_date(self, obj):
-    #     if obj.voter_updated_date is None:
-    #         return None
-
-    #     request = self.context.get('request', None)
-
-    #     if request:
-    #         tz = 'Asia/Kolkata'  
-    #         local_tz = pytz.timezone(tz)
-    #         local_time = obj.voter_updated_date.astimezone(local_tz)
-    #         utc_offset = local_time.strftime('%z')
-    #         gmt_offset = f"(GMT{utc_offset[:3]}:{utc_offset[3:]})"
-    #         return local_time.strftime('%Y-%m-%d %H:%M:%S') + gmt_offset
-    #     return obj.voter_updated_date.strftime('%Y-%m-%d %H:%M:%S')
-
-        
+  
     def get_voter_updated_by(self, obj):
         if obj.voter_updated_by:
             return obj.voter_updated_by.username  # Return the username of the editor
@@ -260,21 +249,19 @@ class VoterlistSerializer(serializers.ModelSerializer):
             except Religion.DoesNotExist:
                 return None
         return None
-        
     
-        
-
+    def get_vote_confirmation_type(self, obj):
+        if obj.voter_vote_confirmation_id:
+            try:
+                vote_confirmation = Vote_confirmation.objects.get(vote_confirmation_id=obj.voter_vote_confirmation_id)
+                return vote_confirmation.vote_confirmation_type
+            except Vote_confirmation.DoesNotExist:
+                return None
+        return None
+    
+   
 
 # # # register api
-
-# from .models import User
-
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         # fields = '__all__'
-#         fields = ['user_name', 'user_phone', 'user_password', 'user_booth_id']
-
 # api for multiple booth asign to user
 
 from rest_framework import serializers
@@ -299,9 +286,6 @@ class UserRegistrationSerializer(serializers.Serializer):
     booth_ids = serializers.ListField(
         child=serializers.IntegerField()
     )
-
-
-
 
 
 # # login api
@@ -416,14 +400,6 @@ class ReligionSerializer(serializers.ModelSerializer):
 
 # Favour non-favour api
 
-# from .models import Favour_non_favour
-
-# class Favour_non_favourSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Favour_non_favour
-#         fields = ['favour_id', 'favour_type']
-
-
 from .models import Favour_non_favour
 
 class Favour_non_favourSerializer(serializers.ModelSerializer):
@@ -443,13 +419,33 @@ class Town_userLoginSerializer(serializers.Serializer):
 
 # town_user register
 
-from .models import Town_user
+# from .models import Town_user
 
-class Town_userSerializer(serializers.ModelSerializer):
+# class Town_userSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Town_user
+#         fields = [ 'town_user_name', 'town_user_contact_number', 'town_user_password', 'town_user_town_id']
+
+
+from .models import Town_user, UserTown
+
+class TownUserSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = Town_user
+       fields = ['user_town_town_user_id', 'town_user_name', 'town_user_contact_number', 'town_user_password']
+
+class UserTownSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Town_user
-        fields = [ 'town_user_name', 'town_user_contact_number', 'town_user_password', 'town_user_town_id']
+        model = UserTown
+        fields = ['user_town_town_user_id', 'user_town_town_id']
 
+class TownUserRegistrationSerializer(serializers.Serializer):
+    town_user_name = serializers.CharField(max_length=255)
+    town_user_password = serializers.CharField(max_length=255)
+    town_user_contact_number = serializers.CharField(max_length=15)
+    town_ids = serializers.ListField(
+        child=serializers.IntegerField()
+    )
 
 # constituency wise voter api
 
@@ -488,3 +484,14 @@ class ZpCircleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ZpCircle
         fields = ['zp_circle_id', 'zp_circle_name']
+
+
+
+# voter vote confirmation
+
+from .models import Vote_confirmation
+
+class vote_confirmationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vote_confirmation
+        fields = ['vote_confirmation_id', 'vote_confirmation_type']

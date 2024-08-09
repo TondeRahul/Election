@@ -98,6 +98,16 @@ from .views import TownUserTownDeleteView
 from .views import update_town_panchayat
 from .views import get_panchayat_samiti_circle
 from .views import update_panchayat_circle
+from .views import get_voter_list_by_zpcircle
+from .views import get_voter_list_by_panchayat_samiti_circle
+from .views import VoterUpdatedBy
+from .views import get_zp_circle_names
+from .views import get_panchayat_samiti_circle_names
+from .views import get_town_user_info
+from .views import get_town_user_info_with_id
+from .views import get_booth_user_info
+from .views import get_booth_user_info_with_id
+
 
 
 # admin pannel
@@ -106,15 +116,16 @@ from django.urls import path, include
 
 
 urlpatterns = [
+    path('upload/', upload_file, name='upload_file'),
+
     path('register_user/', UserListCreate.as_view(), name='user-list-create'),
     path('register_user/<int:pk>/', UserDetail.as_view(), name='user-detail'),
-    path('userboothdelete/<int:user_booth_user_id>/', UserBoothDeleteView.as_view(), name='user_booth_delete'),
-    path('townusertowndeleteView/<int:user_town_user_id>/', TownUserTownDeleteView.as_view(), name='user_town_delete'),
+    path('user_booth_delete/<int:user_booth_user_id>/', UserBoothDeleteView.as_view(), name='user_booth_delete'),
+    path('town_user_town_delete/<int:user_town_user_id>/', TownUserTownDeleteView.as_view(), name='user_town_delete'),
     
     path('user_login/', UserLogin.as_view(), name='user-login'), 
     path('user_logout/', UserLogout.as_view(), name='logout'),
 
-    path('upload/', upload_file, name='upload_file'),
     path('get_voters/', get_voters, name='get_voters'),
     path('get_voters/<int:booth_id>/', get_voters, name='get_voters'),                          # getting error for fetch perticular voter 
     path('towns/', TownList.as_view(), name='town-list'),
@@ -162,16 +173,23 @@ urlpatterns = [
     path('religions/', ReligionListView.as_view(), name='religion-list'),
     path('religion/<int:religion_id>/', VoterlistByReligion.as_view(), name='voter-list-by-religion'),
     path('religion_wise_voter_list/<int:religion_id>/', VoterlistByReligionView.as_view(), name='voter-list-by-religion'),
-    path('update_town/', update_town_panchayat, name='update-town-panchayat'),   #create panchayat samiti circle and assign panchayat samiti circle to town
+    path('add_panchayat_samiti_circle_town/', update_town_panchayat, name='update-town-panchayat'),   # create PS circle and assign PS circle to town
     path('panchayat_samiti_circle/', get_panchayat_samiti_circle, name='panchayat_samiti_circle'),
-    path('update_panchayat_circle/', update_panchayat_circle, name='update_panchayat_circle'),
-    
-
+    path('add_zp_circle_town/', update_panchayat_circle, name='update_panchayat_circle'),            # #create ZP circle and assign ZP circle to town
+    path('get_voter_list_by_zp_circle/<int:zp_circle_id>/', get_voter_list_by_zpcircle, name='get_voter_list_by_zpcircle'),
+    path('get_voter_list_by_panchayat_samiti_circle/<int:panchayat_samiti_circle_id>/', get_voter_list_by_panchayat_samiti_circle, name='get_voter_list_by_panchayat_samiti_circle'),
+    path('voterupdatedby/<str:voter_updated_by>/', VoterUpdatedBy.as_view(), name='VoterUpdatedBy'),
+    path('zp_circle_names/', get_zp_circle_names, name='get_zp_circle_names'),  
+    path('zp_circle_names/<int:zp_circle_id>/', get_zp_circle_names, name='get_zp_circle_name_by_id'), 
+    path('panchayat_samiti_circle_names/', get_panchayat_samiti_circle_names, name='get_panchayat_samiti_circle_names'),  # For all Panchayat Samiti circles
+    path('panchayat_samiti_circle_names/<int:panchayat_samiti_circle_id>/', get_panchayat_samiti_circle_names, name='get_panchayat_samiti_circle_name_by_id'),
+    path('town_user_info/', get_town_user_info, name='get_all_town_user_info'),
+    path('town_user_info/<int:user_id>/', get_town_user_info_with_id, name='get_town_user_info_with_id'),
+    path('booth_user_info/', get_booth_user_info, name='get_all_booth_user_info'),
+    path('booth_user_info/<int:user_id>/', get_booth_user_info_with_id, name='get_booth_user_info_with_id'),
 
     
 # admin pannel 
     path('admin/', include('accounts.urls'))
     
-
-
 ]

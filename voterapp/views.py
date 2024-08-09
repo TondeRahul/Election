@@ -507,6 +507,7 @@ class VoterlistRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        instance.refresh_from_db()  # Refresh from database to ensure updated fields are fetched
         return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
@@ -537,8 +538,8 @@ class VoterlistRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 #         user_serializer = UserSerializer(data=user_data)
         
 #         if user_serializer.is_valid():
-#             session_id = request.session.get('user_town_user_id')
-#             user = user_serializer.save(user_town_user_id=session_id)
+#             session_id = request.session.get('user_town_town_user_id')
+#             user = user_serializer.save(user_town_town_user_id=session_id)
 #             booth_ids = serializer.validated_data['booth_ids']
             
 #             for booth_id in booth_ids:
@@ -573,8 +574,8 @@ class UserListCreate(generics.ListCreateAPIView):
 
             user_serializer = UserSerializer(data=user_data)
             if user_serializer.is_valid():
-                session_id = request.session.get('user_town_user_id')
-                user = user_serializer.save(user_town_user_id=session_id)
+                session_id = request.session.get('user_town_town_user_id')
+                user = user_serializer.save(user_town_town_user_id=session_id)
                 booth_ids = serializer.validated_data['booth_ids']
 
                 for booth_id in booth_ids:
@@ -909,24 +910,53 @@ class Town_userLogin(APIView):
 
 # town_user register
 
+# from .models import Town_user
+# from .serializers import Town_userSerializer
+
+# class Town_userCreate(generics.ListCreateAPIView):
+#     queryset = Town_user.objects.all()
+#     serializer_class = Town_userSerializer
+
+#     def perform_create(self, serializer):
+#         session_id = self.request.session.get('politician_id')
+#         serializer.save(town_user_politician_id=session_id) 
+
+
 from .models import Town_user
-from .serializers import Town_userSerializer
+from .serializers import TownUserRegistrationSerializer, UserTown, UserTownSerializer
 
 class Town_userCreate(generics.ListCreateAPIView):
     queryset = Town_user.objects.all()
-    serializer_class = Town_userSerializer
+    serializer_class = TownUserRegistrationSerializer
 
-    def perform_create(self, serializer):
-        session_id = self.request.session.get('politician_id')
-        serializer.save(town_user_politician_id=session_id) 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)  
+        
+        if serializer.is_valid():
+            user_data = {
+                'town_user_name': serializer.validated_data['town_user_name'],
+                'town_user_password': serializer.validated_data['town_user_password'],
+                'town_user_contact_number': serializer.validated_data['town_user_contact_number'],
+            }
 
+            town_user = Town_user(**user_data)  
+            town_user.town_user_politician_id = request.session.get('politician_id')
+            town_user.save()
+
+            town_ids = serializer.validated_data['town_ids']
+            for town_id in town_ids:
+                UserTown.objects.create(user_town_town_user_id=town_user.town_user_id, user_town_town_id=town_id)
+
+            return Response({'status': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # get_town_voter
 
 def get_town_voter_list(request, town_user_town_id):
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT 
+            SELECT DISTINCT
                 v.voter_id, 
                 v.voter_name, 
                 b.booth_id, 
@@ -970,6 +1000,7 @@ def get_town_voter_list(request, town_user_town_id):
         })
 
     return JsonResponse({'voters': voters})
+
 
 
 # get_taluka_voter_list
@@ -1437,8 +1468,9 @@ class UserBoothDeleteView(APIView):
 
 
 # Remove multi town API
+
 class TownUserTownDeleteView(APIView):
-    def delete(self, request, user_town_user_id):
+    def delete(self, request, user_town_town_user_id):
         user_town_town_id = request.data.get('user_town_town_id')
 
         if not user_town_town_id:
@@ -1447,13 +1479,13 @@ class TownUserTownDeleteView(APIView):
         # Write the SQL DELETE query
         sql_query = """
             DELETE FROM vote.tbl_user_town
-            WHERE user_town_user_id = %s 
+            WHERE user_town_town_user_id = %s 
             AND user_town_town_id = %s
         """
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(sql_query, [user_town_user_id, user_town_town_id])
+                cursor.execute(sql_query, [user_town_town_user_id, user_town_town_id])
                 if cursor.rowcount == 0:
                     return Response({'message': 'No records found to delete'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -1555,3 +1587,163 @@ def update_panchayat_circle(request):
     
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+# get voter list by zp circle wise
+
+@require_http_methods(["GET"])
+def get_voter_list_by_zpcircle(request, zp_circle_id):
+    try:
+        zp_circle_id = int(zp_circle_id)
+    except ValueError:
+        return JsonResponse({'error': 'zp_circle_id must be an integer'}, status=400)
+
+    with connection.cursor() as cursor:
+        cursor.callproc('sp_vw_GetVoterListByZpCircleId', [zp_circle_id])
+        results = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+
+    results_list = [dict(zip(columns, row)) for row in results]
+
+    return JsonResponse(results_list, safe=False)
+
+
+# get voter list by panchayat samiti circle
+
+@require_http_methods(["GET"])
+def get_voter_list_by_panchayat_samiti_circle(request, panchayat_samiti_circle_id):
+    try:
+        panchayat_samiti_circle_id = int(panchayat_samiti_circle_id)
+    except ValueError:
+        return JsonResponse({'error': 'zp_circle_id must be an integer'}, status=400)
+
+    with connection.cursor() as cursor:
+        cursor.callproc('sp_vw_GetVoterListByPanchayatSamitiCircleId', [panchayat_samiti_circle_id])
+        results = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+
+    results_list = [dict(zip(columns, row)) for row in results]
+
+    return JsonResponse(results_list, safe=False)
+
+
+# activity log
+
+class VoterUpdatedBy(View):
+    def get(self, request, args, *kwargs):
+        voter_updated_by = kwargs.get('voter_updated_by')
+        
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT voter_id, voter_name
+                FROM vote.tbl_voter
+                WHERE voter_updated_by = %s
+            """, [voter_updated_by])
+            rows = cursor.fetchall()
+        
+        result = [{'voter_id': row[0], 'voter_name': row[1]} for row in rows]
+        
+        return JsonResponse(result, safe=False)
+
+
+
+# get zp circle names
+
+@require_http_methods(["GET"])
+def get_zp_circle_names(request, zp_circle_id=None):
+    try:
+        with connection.cursor() as cursor:
+            if zp_circle_id:
+                cursor.execute("SELECT zp_circle_id, zp_circle_name FROM tbl_zp_circle WHERE zp_circle_id = %s", [zp_circle_id])
+            else:
+                cursor.execute("SELECT zp_circle_id, zp_circle_name FROM tbl_zp_circle")
+                
+            results = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+
+        zp_circle_list = [dict(zip(columns, row)) for row in results]
+        return JsonResponse(zp_circle_list, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+# get PS circle names
+    
+@require_http_methods(["GET"])
+def get_panchayat_samiti_circle_names(request, panchayat_samiti_circle_id=None):
+    try:
+        with connection.cursor() as cursor:
+            if panchayat_samiti_circle_id:
+                cursor.execute("SELECT panchayat_samiti_circle_id, panchayat_samiti_circle_name FROM tbl_panchayat_samiti_circle WHERE panchayat_samiti_circle_id = %s", [panchayat_samiti_circle_id])
+            else:
+                cursor.execute("SELECT panchayat_samiti_circle_id, panchayat_samiti_circle_name FROM tbl_panchayat_samiti_circle")
+                
+            results = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+
+        psc_circle_list = [dict(zip(columns, row)) for row in results]
+        return JsonResponse(psc_circle_list, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# get town user info 
+
+def get_town_user_info(request):
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.GetTownUserInfo')
+        result = cursor.fetchall()
+        
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+def get_town_user_info_with_id(request, user_id):
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid 'id' parameter")
+
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.GetTownUserInfoWithId', [user_id])
+        result = cursor.fetchall()
+        
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+
+# get booth user info 
+
+def get_booth_user_info(request):
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.GetBoothUserInfo')
+        result = cursor.fetchall()
+        
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+def get_booth_user_info_with_id(request, user_id):
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid 'id' parameter")
+
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.GetBoothUserInfoWithId', [user_id])
+        result = cursor.fetchall()
+        
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+
+
+    
