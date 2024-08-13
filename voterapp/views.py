@@ -878,6 +878,42 @@ from .models import Town_user
 from .serializers import Town_userLoginSerializer
 from .models import Town_user 
 
+# class Town_userLogin(APIView):
+#     def post(self, request):
+#         serializer = Town_userLoginSerializer(data=request.data)
+#         if serializer.is_valid():
+#             town_user_name = serializer.validated_data.get('town_user_name')
+#             town_user_password = serializer.validated_data.get('town_user_password')
+
+#             try:
+#                 town_user = Town_user.objects.get(town_user_name=town_user_name)
+
+#             except Town_user.DoesNotExist:
+#                 return Response({"message": "Invalid name credentials"}, status=status.HTTP_401_UNAUTHORIZED) 
+
+
+#             # if check_password(town_user_password, town_user.town_user_password)
+#             if town_user_password == town_user.town_user_password:
+#                 request.session['town_user_id'] = town_user.town_user_id
+#                 town_user_town_id = town_user.town_user_town_id 
+#                 response_data = {
+#                     "message": "Login successful",
+#                     "town_user_town_id": town_user_town_id  # Include town_user_town_id in the response
+#                 }
+#                 print(request.session.get('town_user_id'))
+#                 return Response(response_data, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"message": "Invalid password credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+#         else:
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+from .serializers import Town_userLoginSerializer
+from .models import Town_user
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
 class Town_userLogin(APIView):
     def post(self, request):
         serializer = Town_userLoginSerializer(data=request.data)
@@ -887,18 +923,16 @@ class Town_userLogin(APIView):
 
             try:
                 town_user = Town_user.objects.get(town_user_name=town_user_name)
-
             except Town_user.DoesNotExist:
-                return Response({"message": "Invalid name credentials"}, status=status.HTTP_401_UNAUTHORIZED) 
-
+                return Response({"message": "Invalid name credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
             # if check_password(town_user_password, town_user.town_user_password)
             if town_user_password == town_user.town_user_password:
                 request.session['town_user_id'] = town_user.town_user_id
-                town_user_town_id = town_user.town_user_town_id 
+                town_user_id = town_user.town_user_id  # Get the town_user_id
                 response_data = {
                     "message": "Login successful",
-                    "town_user_town_id": town_user_town_id  # Include town_user_town_id in the response
+                    "town_user_id": town_user_id  # Include town_user_id in the response
                 }
                 print(request.session.get('town_user_id'))
                 return Response(response_data, status=status.HTTP_200_OK)
@@ -1646,7 +1680,6 @@ class VoterUpdatedBy(View):
         return JsonResponse(result, safe=False)
 
 
-
 # get zp circle names
 
 @require_http_methods(["GET"])
@@ -1742,6 +1775,24 @@ def get_booth_user_info_with_id(request, user_id):
         data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
 
     return JsonResponse(data, safe=False)
+
+
+# Get Town user wise voter data
+
+def get_voter_list_by_town_user(request, user_town_town_user_id):
+    try:
+        user_id = int(user_town_town_user_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid 'user_id' parameter")
+
+    with connection.cursor() as cursor:
+        cursor.callproc('sp_GetVoterListByTownUser', [user_town_town_user_id])
+        result = cursor.fetchall()
+        
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
 
 
 
