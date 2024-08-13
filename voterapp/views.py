@@ -831,6 +831,15 @@ class PoliticianLoginView(APIView):
                 return Response({"error": "Politician not found"}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+    
+
+class PoliticianLogoutView(APIView):
+    def post(self, request):
+        if 'politician_id' in request.session:
+            del request.session['politician_id']
+            return Response({"message": "Logout Successful"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "User not logged in"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

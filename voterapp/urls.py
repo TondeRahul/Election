@@ -69,6 +69,7 @@ from .views import VoterlistListCreate, VoterlistRetrieveUpdateDestroy
 from .views import get_voters_by_booth
 from .views import GetVoterByCastView
 from .views import PoliticianLoginView
+from .views import PoliticianLogoutView
 from .views import PoliticianCreate
 from .views import ReligionListCreate
 from .views import ReligionRetriveUpdateDestroy
@@ -148,6 +149,7 @@ urlpatterns = [
     path('voters_by_cast/<str:voter_cast>/', GetVoterByCastView.as_view(), name='voter-by-cast'),
     path('politician_register/', PoliticianCreate.as_view(), name='Politician-list'), 
     path('politician_login/', PoliticianLoginView.as_view(), name='politician-login'),
+    path('politician_logout/', PoliticianLogoutView.as_view(), name='politician-logout'),
     path('religion/', ReligionListCreate.as_view(), name='religion-list'),
     path('religion/<int:pk>/', ReligionRetriveUpdateDestroy.as_view(), name='religion-detail'),
     # path('favour/', Favour_non_favourListCreate.as_view(), name='Favour_non_favour-list'),
