@@ -679,78 +679,6 @@
     crossorigin="anonymous"></script>
 
 
-  <!-- <script>
-    //   document.addEventListener('DOMContentLoaded', () => {
-    //     fetch('/api/get_all_voters/')
-    //       .then(response => response.json())
-    //       .then(data => {
-    //         const tableBody = document.getElementById('karyakartaTableBody');
-
-    //         data.forEach(user => {
-    //           const row = document.createElement('tr');
-
-    //           const nameCell = document.createElement('td');
-    //           nameCell.style.textAlign = 'center';
-    //           nameCell.textContent = user.voter_id;
-    //           row.appendChild(nameCell);
-
-    //           const contactCell = document.createElement('td');
-    //           contactCell.style.textAlign = 'center';
-    //           contactCell.textContent = user.voter_name;
-    //           row.appendChild(contactCell);
-
-    //           const passwordCell = document.createElement('td');
-    //           passwordCell.style.textAlign = 'center';
-    //           passwordCell.textContent = user.booth_name;
-    //           row.appendChild(passwordCell);
-
-    //           const townIdCell = document.createElement('td');
-    //           townIdCell.style.textAlign = 'center';
-    //           townIdCell.textContent = user.voter_town_name;
-    //           row.appendChild(townIdCell);
-
-    //           tableBody.appendChild(row);
-    //         });
-    //       })
-    //       .catch(error => {
-    //         console.error('Error fetching data:', error);
-    //       });
-    //   });
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-      fetch('/api/get_all_voters/')
-        .then(response => response.json())
-        .then(data => {
-          const tableBody = document.getElementById('karyakartaTableBody');
-
-          data.voters.forEach(user => {
-            const row = document.createElement('tr');
-
-            const nameCell = document.createElement('td');
-            nameCell.style.textAlign = 'center';
-            nameCell.textContent = user.voter_id;
-            row.appendChild(nameCell);
-
-            const contactCell = document.createElement('td');
-            contactCell.style.textAlign = 'center';
-            contactCell.textContent = user.voter_name;
-            row.appendChild(contactCell);
-
-            const passwordCell = document.createElement('td');
-            passwordCell.style.textAlign = 'center';
-            passwordCell.textContent = user.booth_name;
-            row.appendChild(passwordCell);
-
-            tableBody.appendChild(row);
-          });
-        })
-        .catch(error => {
-          console.error('Error fetching data:', error);
-        });
-    });
-
-  </script> -->
 
   <script>
 
@@ -791,7 +719,7 @@
                   boothSelect.addEventListener('change', function () {
                     const selectedBoothId = boothSelect.value;
                     if (selectedBoothId) {
-                      fetch(`http://127.0.0.1:8000/api/get_voters_by_booth/${selectedBoothId}/`)
+                      fetch(`/api/get_voters_by_booth/${selectedBoothId}/`)
                         .then(response => response.json())
                         .then(data => {
                           const votersTableBody = document.getElementById('votersTableBody');

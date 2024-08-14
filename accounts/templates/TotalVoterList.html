@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -56,6 +59,7 @@
                       <th style="text-align: center">Sr. No.</th>
                       <th style="text-align: center">Voter Name</th>
                       <th style="text-align: center">Booth Name</th>
+                      <th style="text-align: center">Town Name</th>
                     </tr>
                   </thead>
                   <tbody id="karyakartaTableBody">
@@ -108,6 +112,11 @@
               passwordCell.style.textAlign = 'center';
               passwordCell.textContent = user.booth_name;
               row.appendChild(passwordCell);
+
+              const townCell = document.createElement('td');
+              townCell.style.textAlign = 'center';
+              townCell.textContent = user.town_name;
+              row.appendChild(townCell);
 
               tableBody.appendChild(row);
             });

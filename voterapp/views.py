@@ -1386,7 +1386,8 @@ def get_all_voters(request):
     voters = [{
         'voter_id': row[0],
         'voter_name': row[1],
-        'booth_name': row[2]
+        'booth_name': row[2],
+        'town_name' : row[3]
     } for row in results]
 
     paginator = Paginator(voters, page_size)
