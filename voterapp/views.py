@@ -842,7 +842,6 @@ class PoliticianLogoutView(APIView):
             return Response({"message": "User not logged in"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 # # Religion api
 
 from .models import Religion
@@ -923,7 +922,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-class Town_userLogin(APIView):
+class Town_user_Login(APIView):
     def post(self, request):
         serializer = Town_userLoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -950,6 +949,16 @@ class Town_userLogin(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Town user Logout 
+
+class Town_user_Logout(APIView):
+    def post(self, request):
+        if 'town_user_id' in request.session:
+            del request.session['town_user_id']
+            return Response({"message": "Logout Successful"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "User not logged in"}, status=status.HTTP_400_BAD_REQUEST)
 
 # town_user register
 
@@ -1244,7 +1253,7 @@ class EditedVoterlistList(generics.ListAPIView):
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_id')
-        return Voterlist.objects.filter(voter_updated_by=user_id)  # Fetch edited records by specific user
+        return Voterlist.objects.filter(voter_updated_by=user_id)  
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -1268,7 +1277,7 @@ class EditedVoterlistByDate(generics.ListAPIView):
             except ValueError:
                 raise ValidationError('Invalid date format. Use YYYY-MM-DD.')
             return Voterlist.objects.filter(voter_updated_date=date)
-        return Voterlist.objects.none()  # No date provided, return empty queryset
+        return Voterlist.objects.none()  
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -1346,23 +1355,19 @@ class BoothListByTown(generics.ListAPIView):
 
 
 # Total Voter List
+
 from django.views.decorators.http import require_http_methods
 @require_http_methods(["GET"])
 def total_voters(request):
     try:
-        # Define the SQL query
         sql_query = "SELECT voter_id, voter_name FROM tbl_voter ; "
         
-        # Execute the raw SQL query
         with connection.cursor() as cursor:
             cursor.execute(sql_query)
-            # Fetch all rows from the executed query
             rows = cursor.fetchall()
         
-        # Convert rows to a list of dictionaries
         voter_list = [{'voter_id': row[0], 'voter_name': row[1]} for row in rows]
         
-        # Return the result as a JSON response
         return JsonResponse(voter_list, safe=False, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -1470,11 +1475,8 @@ from .serializers import VoterlistSerializer
 class VoterlistByReligionView(APIView):
     def get(self, request, religion_id):
         try:
-            # Check if the religion exists
             religion = Religion.objects.get(religion_id=religion_id)
-            # Get voters with the specified religion_id
             voters = Voterlist.objects.filter(voter_religion_id=religion.religion_id)
-            # Serialize the voter data
             serializer = VoterlistSerializer(voters, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Religion.DoesNotExist:
@@ -1519,7 +1521,6 @@ class TownUserTownDeleteView(APIView):
         if not user_town_town_id:
             return Response({'error': 'user_town_town_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Write the SQL DELETE query
         sql_query = """
             DELETE FROM vote.tbl_user_town
             WHERE user_town_town_user_id = %s 
@@ -1546,19 +1547,17 @@ from .models import PanchayatSamitiCircle
 
 @api_view(['POST'])
 def update_town_panchayat(request):
-    town_ids = request.data.get('town_ids')  # Expecting a list of town IDs
+    town_ids = request.data.get('town_ids')  
     panchayat_samiti_circle_name = request.data.get('panchayat_samiti_circle_name')
     
     if not town_ids or not isinstance(town_ids, list) or not panchayat_samiti_circle_name:
         return Response({'error': 'Both town_ids (as an array) and panchayat_samiti_circle_name are required.'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # Check if the PanchayatSamitiCircle exists or create a new one
         panchayat_circle, created = PanchayatSamitiCircle.objects.get_or_create(
             panchayat_samiti_circle_name=panchayat_samiti_circle_name
         )
         
-        # Update each town with the panchayat_samiti_circle_id
         towns_updated = []
         for town_id in town_ids:
             try:
@@ -1567,7 +1566,7 @@ def update_town_panchayat(request):
                 town.save()
                 towns_updated.append(town_id)
             except Town.DoesNotExist:
-                continue  # Skip towns that do not exist
+                continue  
         
         if not towns_updated:
             return Response({'error': 'None of the provided town_ids were found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1578,14 +1577,13 @@ def update_town_panchayat(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-#API for get panchayat samiti circle
+# API for get panchayat samiti circle
 
 def get_panchayat_samiti_circle(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT panchayat_samiti_circle_id, panchayat_samiti_circle_name FROM tbl_panchayat_samiti_circle")
         rows = cursor.fetchall()
         
-    # Convert the result into a list of dictionaries
     result = [
         {
             "panchayat_samiti_circle_id": row[0],
@@ -1597,22 +1595,22 @@ def get_panchayat_samiti_circle(request):
     return JsonResponse(result, safe=False)
 
 
+# API for get ZP circle
+
 from .models import ZpCircle
 @api_view(['POST'])
 def update_panchayat_circle(request):
-    panchayat_samiti_circle_ids = request.data.get('panchayat_samiti_circle_ids')  # Expecting a list of town IDs
+    panchayat_samiti_circle_ids = request.data.get('panchayat_samiti_circle_ids')  
     zp_circle_name = request.data.get('zp_circle_name')
     
     if not panchayat_samiti_circle_ids or not isinstance(panchayat_samiti_circle_ids, list) or not zp_circle_name:
         return Response({'error': 'Both town_ids (as an array) and panchayat_samiti_circle_name are required.'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # Check if the PanchayatSamitiCircle exists or create a new one
         zp_circle, created = ZpCircle.objects.get_or_create(
             zp_circle_name= zp_circle_name
         )
         
-        # Update each town with the panchayat_samiti_circle_id
         panchayatsamiti_updated = []
         for panchayat_samiti_circle_id in panchayat_samiti_circle_ids:
             try:
@@ -1621,7 +1619,7 @@ def update_panchayat_circle(request):
                 panchayatSamitiCircle.save()
                 panchayatsamiti_updated.append(panchayat_samiti_circle_id)
             except PanchayatSamitiCircle.DoesNotExist:
-                continue  # Skip towns that do not exist
+                continue  
         
         if not panchayatsamiti_updated:
             return Response({'error': 'None of the provided town_ids were found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -1803,6 +1801,100 @@ def get_voter_list_by_town_user(request, user_town_town_user_id):
     return JsonResponse(data, safe=False)
 
 
+
+# API to get user booth wise
+
+def get_user_by_booth_id(request, user_booth_booth_id):
+   
+    with connection.cursor() as cursor:
+        
+        cursor.callproc('vote.sp_GetUserByBoothId', [user_booth_booth_id])
+        
+        
+        rows = cursor.fetchall()
+        
+       
+        columns = [col[0] for col in cursor.description]
+        
+       
+        results = [dict(zip(columns, row)) for row in rows]
+    
+    return JsonResponse(results, safe=False)
+
+
+# Api to get user town usr wise voter list
+
+def get_town_users_by_town_id(request, user_town_town_id):
+    try:
+        
+        with connection.cursor() as cursor:
+            
+            cursor.callproc('sp_GetTownUsersByTownId', [user_town_town_id])
+            
+            
+            rows = cursor.fetchall()
+            
+            
+            columns = [col[0] for col in cursor.description]
+            
+            
+            results = [dict(zip(columns, row)) for row in rows]
+            
+        return JsonResponse(results, safe=False)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+# Booth Vote summery
+  
+def booth_votes_summary(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+                        SELECT 
+                row_index,
+                booth_name,
+                mycount,
+                town_name,
+                taluka_name
+            FROM (
+                SELECT 
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS row_index,
+                    b.booth_name AS booth_name,
+                    COUNT(*) AS mycount,
+                    t.town_name AS town_name,
+                    ta.panchayat_samiti_name AS taluka_name
+                FROM 
+                    vote.tbl_voter v
+                INNER JOIN 
+                    vote.tbl_booth b ON v.voter_booth_id = b.booth_id
+                INNER JOIN
+                    vote.tbl_town t ON v.voter_town_id = t.town_id
+                INNER JOIN
+                    vote.tbl_panchayat_samiti ta ON t.town_panchayat_samiti_id = ta.panchayat_samiti_id  
+                GROUP BY 
+                    b.booth_name, t.town_name, ta.panchayat_samiti_name
+            ) AS subquery
+            ORDER BY 
+                row_index;
+
+
+
+        """)
+        rows = cursor.fetchall()
+        
+    # Format the results as a list of dictionaries
+    result = []
+    for row in rows:
+        result.append({
+            'sr no' : row[0],
+            'booth_name': row[1],
+            'town_name' : row[3],
+            'taluka_name' : row[4],
+            'mycount': row[2]
+        })
+    
+    return JsonResponse(result, safe=False)
 
 
 
