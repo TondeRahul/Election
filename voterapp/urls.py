@@ -112,7 +112,13 @@ from .views import get_voter_list_by_town_user
 from .views import get_user_by_booth_id
 from .views import get_town_users_by_town_id
 from .views import booth_votes_summary
-
+from .views import generate_pdf
+from .views import Panchayat_samiti_circle_userCreate
+from .views import Zp_circle_userCreate
+from .views import get_panchayat_samiti_user_info
+from .views import get_panchayat_samiti_user_info_with_id
+from .views import get_zp_user_info
+from .views import get_zp_user_info_with_id
 
 
 
@@ -199,6 +205,18 @@ urlpatterns = [
     path('get_user_by_booth_id/<int:user_booth_booth_id>/', get_user_by_booth_id, name='get_user_by_booth_id'),
     path('get_town_users_by_town_id/<int:user_town_town_id>/', get_town_users_by_town_id, name='get_town_users_by_town_id'),
     path('booth_votes_summary/', booth_votes_summary, name='booth_votes_summary'),
+    path('generate_pdf/', generate_pdf, name='generate_pdf'),
+
+    path('panchayat_samiti_circle_user_register/', Panchayat_samiti_circle_userCreate.as_view(), name='Panchayat_samiti_circle_userCreate-list'),
+    path('zp_circle_user_register/', Zp_circle_userCreate.as_view(), name='Zp_circle_userCreate-list'),
+    path('panchayat_samiti_circle_user_info/', get_panchayat_samiti_user_info, name='get_panchayat_samiti_user_info'),
+    path('panchayat_samiti_circle_user_info/<int:panchayat_samiti_user_id>/', get_panchayat_samiti_user_info_with_id, name='get_panchayat_samiti_user_info_with_id'),
+    path('zp_circle_user_info/', get_zp_user_info, name='get_zp_user_info'),
+    path('zp_circle_user_info/<int:zp_user_id>/', get_zp_user_info_with_id, name='get_zp_user_info_with_id'),
+
+
+
+
 
     
 # admin pannel 

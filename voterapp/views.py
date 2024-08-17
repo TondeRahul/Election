@@ -1898,5 +1898,230 @@ def booth_votes_summary(request):
     return JsonResponse(result, safe=False)
 
 
+# export in pdf
 
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph
+from django.urls import reverse
+import requests
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+
+
+def wrap_text(text, max_length):
+    """Wrap text to ensure no line exceeds max_length characters."""
+    if len(text) <= max_length:
+        return text
+    return '\n'.join(text[i:i + max_length] for i in range(0, len(text), max_length))
+
+def generate_pdf(request):
+    api_url = request.build_absolute_uri(reverse('booth_votes_summary'))
+
+    response = requests.get(api_url)
+    data = response.json()
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="booth_details.pdf"'
+
+    buffer = BytesIO()
+    pdf = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=0.1*inch, rightMargin=0.1*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+
+    constituency_name = "Constituency Name: Washim"
+    styles = getSampleStyleSheet()
+    custom_style = ParagraphStyle(name='CustomStyle', parent=styles['Normal'], fontSize=14, spaceAfter=14)
+    paragraph = Paragraph(constituency_name, custom_style)
+
+    table_data = [
+        ['Index', 'Booth Name', 'Town Name', 'Taluka Name', 'Voter Count']
+    ]
+    max_length = 63
+    for index, item in enumerate(data, start=1):
+        booth_name = wrap_text(item['booth_name'], max_length)
+        town_name = wrap_text(item['town_name'], max_length)
+        taluka_name = wrap_text(item['taluka_name'], max_length)
+        table_data.append([index, booth_name, town_name, taluka_name, str(item['mycount'])])
+
+    col_widths = [0.5*  inch, 4.4*  inch, 1.4*  inch, 1.1*  inch, 0.8* inch]
+
+    table = Table(table_data, colWidths=col_widths, hAlign='LEFT')
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (-1, -1), 'LEFT'),
+        ('LEFTPADDING', (0, 1), (0, -1), 0),
+        ('RIGHTPADDING', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (1, 1), (-1, -1), 10),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+    ]))
+
+    elements = [paragraph, table]
+
+    pdf.build(elements)
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    response.write(pdf_data)
+    return response
+
+
+
+# #
+
+from .models import Panchayat_samiti_circle_user, User_panchayat_samiti_circle
+from .serializers import Panchayat_samiti_circle_userRegistrationSerializer
+
+class Panchayat_samiti_circle_userCreate(generics.ListCreateAPIView):
+    queryset = Panchayat_samiti_circle_user.objects.all()
+    serializer_class = Panchayat_samiti_circle_userRegistrationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Extract validated data
+            panchayat_samiti_circle_user_name = serializer.validated_data['panchayat_samiti_circle_user_name']
+            panchayat_samiti_circle_user_password = serializer.validated_data['panchayat_samiti_circle_user_password']
+            panchayat_samiti_circle_user_contact_number = serializer.validated_data['panchayat_samiti_circle_user_contact_number']
+            panchayat_samiti_circle_ids = serializer.validated_data['panchayat_samiti_circle_ids']
+            
+            # Create the Panchayat_samiti_circle_user instance
+            panchayat_samiti_circle_user = Panchayat_samiti_circle_user(
+                panchayat_samiti_circle_user_name=panchayat_samiti_circle_user_name,
+                panchayat_samiti_circle_user_password=panchayat_samiti_circle_user_password,
+                panchayat_samiti_circle_user_contact_number=panchayat_samiti_circle_user_contact_number
+            )
+            
+            # Set additional attributes
+            panchayat_samiti_circle_user.panchayat_samiti_circle_user_politician_id = request.session.get('politician_id')
+            
+            # Save the instance
+            panchayat_samiti_circle_user.save()
+            
+            # Handle town_ids
+            for panchayat_samiti_circle_id in panchayat_samiti_circle_ids:
+                User_panchayat_samiti_circle.objects.create(
+                    user_panchayat_samiti_circle_id=panchayat_samiti_circle_user.panchayat_samiti_circle_user_id,
+                    user_panchayat_samiti_circle_panchayat_samiti_circle_id=panchayat_samiti_circle_id
+                )
+            
+            return Response({'status': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+#zp circle user registration
+
+from .models import Zp_circle_user, User_zp_circle
+from .serializers import Zp_circle_userRegistrationSerializer
+
+class Zp_circle_userCreate(generics.ListCreateAPIView):
+    queryset = Zp_circle_user.objects.all()
+    serializer_class = Zp_circle_userRegistrationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Extract validated data
+            zp_circle_user_name = serializer.validated_data['zp_circle_user_name']
+            zp_circle_user_password = serializer.validated_data['zp_circle_user_password']
+            zp_circle_user_contact_number = serializer.validated_data['zp_circle_user_contact_number']
+            zp_circle_user_ids = serializer.validated_data['zp_circle_ids']
+            
+            # Create the Panchayat_samiti_circle_user instance
+            zp_circle_user = Zp_circle_user(
+                zp_circle_user_name= zp_circle_user_name,
+                zp_circle_user_password=zp_circle_user_password,
+                zp_circle_user_contact_number= zp_circle_user_contact_number
+            )
+            
+            # Set additional attributes
+            zp_circle_user.zp_circle_user_politician_id = request.session.get('politician_id')
+            
+            # Save the instance
+            zp_circle_user.save()
+            
+            # Handle town_ids
+            for zp_circle_user_id in zp_circle_user_ids:
+                User_zp_circle.objects.create(
+                    user_zp_circle_id = zp_circle_user.zp_circle_user_id,
+                    user_zp_circle_zp_circle_id = zp_circle_user_id
+                )
+            
+            return Response({'status': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+def get_panchayat_samiti_user_info(request):
+    # Call the stored procedure
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.sp_GetPanchayatSamitiCircleUserDetails')
+        # Fetch all rows from the cursor
+        result = cursor.fetchall()
+        
+        # Assuming result is a list of tuples, you might need to format it as needed
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+def get_panchayat_samiti_user_info_with_id(request, panchayat_samiti_user_id):
+    # Validate the user_id
+    try:
+        panchayat_samiti_user_id = int(panchayat_samiti_user_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid 'id' parameter")
+
+    # Call the stored procedure
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.sp_GetPanchayatSamitiCircleUserDetailsWithId', [panchayat_samiti_user_id])
+        result = cursor.fetchall()
+        
+        # Format the result into a list of dictionaries
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+#zp circle
+
+def get_zp_user_info(request):
+    # Call the stored procedure
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.sp_GetZpCircleUserDetails')
+        # Fetch all rows from the cursor
+        result = cursor.fetchall()
+        
+        # Assuming result is a list of tuples, you might need to format it as needed
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)
+
+
+def get_zp_user_info_with_id(request, zp_user_id):
+    # Validate the user_id
+    try:
+        zp_user_id = int(zp_user_id)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid 'id' parameter")
+
+    # Call the stored procedure
+    with connection.cursor() as cursor:
+        cursor.callproc('vote.sp_GetZpCircleUserDetailsWithId', [zp_user_id])
+        result = cursor.fetchall()
+        
+        # Format the result into a list of dictionaries
+        data = [dict(zip([desc[0] for desc in cursor.description], row)) for row in result]
+
+    return JsonResponse(data, safe=False)

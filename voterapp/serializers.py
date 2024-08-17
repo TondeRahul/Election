@@ -495,3 +495,51 @@ class vote_confirmationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vote_confirmation
         fields = ['vote_confirmation_id', 'vote_confirmation_type']
+
+
+
+
+# panchayat samiti circle user registration
+
+from .models import Panchayat_samiti_circle_user, User_panchayat_samiti_circle
+
+class Panchayat_samiti_circle_userSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = Panchayat_samiti_circle_user
+       fields = [ 'panchayat_samiti_circle_user_name', 'panchayat_samiti_circle_user_contact_number', 'panchayat_samiti_circle_user_password']
+
+class User_panchayat_samiti_circleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User_panchayat_samiti_circle
+        fields = ['user_panchayat_samiti_circle_id', 'user_panchayat_samiti_circle_panchayat_samiti_circle_id']
+
+class Panchayat_samiti_circle_userRegistrationSerializer(serializers.Serializer):
+    panchayat_samiti_circle_user_name = serializers.CharField(max_length=255)
+    panchayat_samiti_circle_user_password = serializers.CharField(max_length=255)
+    panchayat_samiti_circle_user_contact_number = serializers.IntegerField()
+    panchayat_samiti_circle_ids = serializers.ListField(
+        child=serializers.IntegerField()
+    )
+
+
+# zp circle user registration
+
+from .models import Zp_circle_user, User_zp_circle
+
+class Zp_circle_userSerializer(serializers.ModelSerializer):
+   class Meta:
+       model = Zp_circle_user
+       fields = [ 'zp_circle_user_name', 'zp_circle_user_contact_number', 'zp_circle_user_password']
+
+class User_zp_circleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User_zp_circle
+        fields = ['user_zp_circle_id', 'user_zp_circle_panchayat_zp_circle_id']
+
+class Zp_circle_userRegistrationSerializer(serializers.Serializer):
+    zp_circle_user_name = serializers.CharField(max_length=255)
+    zp_circle_user_password = serializers.CharField(max_length=255)
+    zp_circle_user_contact_number = serializers.IntegerField()
+    zp_circle_ids = serializers.ListField(
+        child=serializers.IntegerField()
+    )

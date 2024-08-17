@@ -438,4 +438,46 @@ class Vote_confirmation(models.Model):
     class Meta:
         db_table = 'tbl_vote_confirmation' 
 
+
+
+# #
+
+class Panchayat_samiti_circle_user(models.Model):
+    panchayat_samiti_circle_user_id = models.AutoField(primary_key=True)
+    panchayat_samiti_circle_user_name = models.CharField(max_length=255, unique=True)
+    panchayat_samiti_circle_user_contact_number = models.BigIntegerField()
+    panchayat_samiti_circle_user_password = models.CharField(max_length=255)
+    panchayat_samiti_circle_user_politician_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_panchayat_samiti_circle_user'
+
+
+class User_panchayat_samiti_circle(models.Model):
+    user_panchayat_samiti_circle_id =  models.IntegerField()
+    user_panchayat_samiti_circle_panchayat_samiti_circle_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_user_panchayat_samiti_circle'  
+
+
+
+
+class Zp_circle_user(models.Model):
+    zp_circle_user_id = models.AutoField(primary_key=True)
+    zp_circle_user_name = models.CharField(max_length=255, unique=True)
+    zp_circle_user_contact_number = models.BigIntegerField()
+    zp_circle_user_password = models.CharField(max_length=255)
+    zp_circle_user_politician_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_zp_circle_user'
+
+
+class User_zp_circle(models.Model):
+    user_zp_circle_id =  models.IntegerField()
+    user_zp_circle_zp_circle_id = models.IntegerField()
+
+    class Meta:
+        db_table = 'tbl_user_zp_circle'    
         
